@@ -208,3 +208,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+ACTIONS_A_EXECUTER.md
+DATA_DRIFT_README.md
+DEPLOYMENT.md
+PRESENTATION_TEMPLATE.md
+QUICKSTART.md
+PROJET_COMPLET_RECAP.md
+README.md
