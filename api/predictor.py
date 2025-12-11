@@ -35,19 +35,13 @@ class CreditScorePredictor:
         self._load_artifacts()
     
     def _load_artifacts(self):
-        """Load model, explainer, feature names, and threshold"""
+        """Load model, feature names, and threshold (explainer loaded on demand)"""
         try:
             # Load model
             logger.info(f"Loading model from {MODEL_PATH}")
             with open(MODEL_PATH, 'rb') as f:
                 self.model = pickle.load(f)
             logger.info("Model loaded successfully")
-            
-            # Load explainer
-            logger.info(f"Loading explainer from {EXPLAINER_PATH}")
-            with open(EXPLAINER_PATH, 'rb') as f:
-                self.explainer = pickle.load(f)
-            logger.info("Explainer loaded successfully")
             
             # Load feature names
             logger.info(f"Loading feature names from {FEATURE_NAMES_PATH}")
@@ -64,10 +58,25 @@ class CreditScorePredictor:
                 logger.info(f"Using optimal threshold: {self.threshold}")
             else:
                 logger.warning(f"Threshold file not found, using default: {DEFAULT_THRESHOLD}")
+            
+            # Note: Explainer will be loaded on demand when needed
+            logger.info("Explainer will be loaded on demand for feature importance")
                 
         except Exception as e:
             logger.error(f"Error loading artifacts: {str(e)}")
             raise
+    
+    def _load_explainer(self):
+        """Load SHAP explainer on demand (lazy loading)"""
+        if self.explainer is None:
+            try:
+                logger.info(f"Loading explainer from {EXPLAINER_PATH}")
+                with open(EXPLAINER_PATH, 'rb') as f:
+                    self.explainer = pickle.load(f)
+                logger.info("Explainer loaded successfully")
+            except Exception as e:
+                logger.error(f"Error loading explainer: {str(e)}")
+                raise
     
     def _prepare_features(self, features_dict: Dict[str, float]) -> np.ndarray:
         """
@@ -177,6 +186,9 @@ class CreditScorePredictor:
             Dictionary with SHAP values and top features
         """
         try:
+            # Load explainer on demand if not already loaded
+            self._load_explainer()
+            
             X = self._prepare_features(features)
             
             # Get SHAP values
